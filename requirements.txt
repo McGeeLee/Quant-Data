@@ -1,0 +1,9 @@
+streamlit
+pandas
+plotly
+yfinance
+akshare
+tushare
+tiingo
+python-binance
+numpy
