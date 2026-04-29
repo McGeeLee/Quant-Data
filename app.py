@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Gemini Quant - 精简版", page_icon="📈", layout="wide")
 
-st.title("📊 量化平台数据源验证")
+st.title("📊 平台数据源验证")
 # st.caption("已移除不稳定源，保留 Tushare / Tiingo / Yahoo Finance")
 
 # 侧边栏
