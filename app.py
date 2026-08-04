@@ -11,24 +11,41 @@ st.title("📊 平台数据源验证")
 # st.caption("已移除不稳定源，保留 Tushare / Tiingo / Yahoo Finance")
 
 # 侧边栏
-st.sidebar.header("⚙️ 配置")
-source = st.sidebar.selectbox("选择数据源", ["Yahoo Finance", "Tushare", "Tiingo"])
+source_map = {
+    "Yahoo Finance": "Yahoo",
+    "Tushare": "Tushare",
+    "Tiingo": "Tiingo",
+}
 
-# 自动处理代码格式提示
-if "Yahoo" in source:
-    ticker = st.sidebar.text_input("代码 (如 AAPL 或 .SS.SZ.BJ)", value="BTC-USD")
-    s_type = "Yahoo"
-elif "Tushare" in source:
-    ticker = st.sidebar.text_input("代码 (.SH.SZ.BJ)", value="600519.SH")
-    s_type = "Tushare"
-else:
-    ticker = st.sidebar.text_input("代码 (AAPL 或 TSLA)", value="AAPL")
-    s_type = "Tiingo"
+with st.sidebar:
+    st.header("⚙️ 配置")
+    source = st.selectbox("选择数据源", list(source_map.keys()))
 
-start_date = st.sidebar.date_input("开始日期", datetime.now() - timedelta(days=365))
-end_date = st.sidebar.date_input("结束日期", datetime.now())
+    source_hints = {
+        "Yahoo Finance": "支持美股、加密货币与部分 A 股，例如 AAPL、BTC-USD、600519.SS",
+        "Tushare": "A 股代码，例如 600519.SH、000001.SZ",
+        "Tiingo": "美股代码，例如 AAPL、TSLA",
+    }
+    default_tickers = {
+        "Yahoo Finance": "BTC-USD",
+        "Tushare": "600519.SH",
+        "Tiingo": "AAPL",
+    }
 
-if st.sidebar.button("🚀 获取数据"):
+    ticker = st.text_input("证券代码", value=default_tickers[source], help=source_hints[source])
+    start_date = st.date_input("开始日期", datetime.now() - timedelta(days=365))
+    end_date = st.date_input("结束日期", datetime.now())
+    s_type = source_map[source]
+
+    fetch = st.button("🚀 获取数据", type="primary", width="stretch")
+
+    st.divider()
+    st.markdown("**数据源状态**")
+    for name, ready in available_sources().items():
+        st.write(f"✅ {name}" if ready else f"⚠️ {name}（未配置 Key）")
+    st.caption("Gemini Quant v2.2")
+
+if fetch:
     with st.spinner('执行调取...'):
         sd, ed = start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')
         df = data_manager.get_data(s_type, ticker, sd, ed)
@@ -55,10 +72,3 @@ if st.sidebar.button("🚀 获取数据"):
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.error("❌ 未能获取数据。请检查代码格式是否正确，或 API Key 是否生效。")
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("**数据源状态**")
-for name, ready in available_sources().items():
-    st.sidebar.write(f"✅ {name}" if ready else f"⚠️ {name}（未配置 Key）")
-st.sidebar.markdown("---")
-st.sidebar.caption("Gemini Quant v2.1")
