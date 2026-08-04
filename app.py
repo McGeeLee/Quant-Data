@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from data import data_manager  
+from data import available_sources
 from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Gemini Quant - 精简版", page_icon="📈", layout="wide")
@@ -55,5 +56,9 @@ if st.sidebar.button("🚀 获取数据"):
         else:
             st.error("❌ 未能获取数据。请检查代码格式是否正确，或 API Key 是否生效。")
 
+st.sidebar.markdown("---")
+st.sidebar.markdown("**数据源状态**")
+for name, ready in available_sources().items():
+    st.sidebar.write(f"✅ {name}" if ready else f"⚠️ {name}（未配置 Key）")
 st.sidebar.markdown("---")
 st.sidebar.caption("Gemini Quant v2.1")

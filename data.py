@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import tushare as ts
@@ -6,9 +7,25 @@ from tiingo import TiingoClient
 
 # --- 核心逻辑 ---
 
+def _secret(name):
+    env_value = os.getenv(name)
+    if env_value:
+        return env_value
+    try:
+        return st.secrets[name]
+    except Exception:
+        return None
+
+def available_sources():
+    return {
+        "Yahoo Finance": True,
+        "Tushare": bool(_secret("TUSHARE_TOKEN")),
+        "Tiingo": bool(_secret("TIINGO_KEY")),
+    }
+
 @st.cache_data(ttl=3600)
 def _fetch_tushare_logic(symbol, start, end):
-    token = st.secrets.get("TUSHARE_TOKEN")
+    token = _secret("TUSHARE_TOKEN")
     if not token:
         st.error("❌ 缺少 TUSHARE_TOKEN")
         return pd.DataFrame()
@@ -43,7 +60,7 @@ def _fetch_yahoo_logic(symbol, start, end, interval="1d"):
 
 class DataManager:
     def __init__(self):
-        self.tiingo_key = st.secrets.get("TIINGO_KEY")
+        self.tiingo_key = _secret("TIINGO_KEY")
         self.tiingo_client = TiingoClient({'api_key': self.tiingo_key}) if self.tiingo_key else None
 
     def get_data(self, source_type, ticker, start, end, **kwargs):
