@@ -48,8 +48,5 @@
   },
   "vars": {
     "APP_VERSION": "3.0.0"
-  },
-  "secrets": {
-    "required": ["TUSHARE_TOKEN", "TIINGO_KEY"]
   }
 }
