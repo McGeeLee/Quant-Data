@@ -1,0 +1,47 @@
+import type { MarketDataResponse, SourceStatus } from "../worker/domain/types";
+
+export const sourcesFixture: SourceStatus[] = [
+  { id: "yahoo", name: "Yahoo Finance Chart", configured: true, official: false, markets: ["US equities"], symbolExamples: ["AAPL"], warnings: [] },
+  { id: "tushare", name: "Tushare Pro", configured: false, official: true, markets: ["China A-shares"], symbolExamples: ["600519.SH"], warnings: [] },
+  { id: "tiingo", name: "Tiingo", configured: false, official: true, markets: ["US equities"], symbolExamples: ["AAPL"], warnings: [] },
+];
+
+export const marketFixture: MarketDataResponse = {
+  meta: { source: "yahoo", symbol: "AAPL", interval: "1d", adjustment: "raw", volumeUnit: "provider-native units", count: 2, fetchedAt: "2026-08-10T00:00:00.000Z", truncated: false, warnings: [] },
+  bars: [
+    { date: "2026-08-07", open: 99, high: 102, low: 98, close: 100, volume: 1_000 },
+    { date: "2026-08-10", open: 101, high: 105, low: 100, close: 104, volume: 1_200 },
+  ],
+};
+
+export function yahooPayload(): {
+  chart: { result: Array<{ timestamp: number[]; indicators: { quote: Array<{ open: Array<number | null>; high: Array<number | null>; low: Array<number | null>; close: Array<number | null>; volume: Array<number | null> }> } }>; error: null };
+} {
+  return {
+    chart: {
+      result: [{
+        timestamp: [1_786_320_000, 1_786_060_800],
+        indicators: { quote: [{ open: [101, 99], high: [105, 102], low: [100, 98], close: [104, 100], volume: [1_200, 1_000] }] },
+      }],
+      error: null,
+    },
+  };
+}
+
+export function testEnv(overrides: Record<string, unknown> = {}): Env {
+  return {
+    APP_VERSION: "3.0.0",
+    TUSHARE_TOKEN: "",
+    TIINGO_KEY: "",
+    MARKET_RATE_LIMIT: { limit: () => Promise.resolve({ success: true }) },
+    VERSION_METADATA: { id: "test-version", tag: "test", timestamp: "2026-08-10T00:00:00.000Z" },
+    ASSETS: { fetch: () => Promise.resolve(new Response("asset")) },
+    ...overrides,
+  } as unknown as Env;
+}
+
+export const testExecutionContext = {
+  waitUntil: () => undefined,
+  passThroughOnException: () => undefined,
+  props: {},
+} as unknown as ExecutionContext;

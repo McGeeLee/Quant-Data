@@ -1,0 +1,56 @@
+{
+  "name": "quant-data",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:dry-run": "wrangler deploy --dry-run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "cf-types": "wrangler types",
+    "cf-types:check": "wrangler types --check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "npm run lint && npm run typecheck && npm test && npm run cf-types:check && npm run build && npm run deploy:dry-run"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^1.5.2",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "agents": "^0.20.1",
+    "hono": "^4.13.1",
+    "lightweight-charts": "^5.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.51.1",
+    "@eslint/js": "^10.0.1",
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@playwright/test": "^1.62.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.3",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.8.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.9.0",
+    "happy-dom": "^20.11.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.66.0",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.120.0"
+  }
+}
