@@ -1,4 +1,5 @@
 import type { MarketDataResponse, SourceStatus } from "../worker/domain/types";
+import type { RuntimeEnv } from "../worker/env";
 
 export const sourcesFixture: SourceStatus[] = [
   { id: "yahoo", name: "Yahoo Finance Chart", configured: true, official: false, markets: ["US equities"], symbolExamples: ["AAPL"], warnings: [] },
@@ -28,20 +29,44 @@ export function yahooPayload(): {
   };
 }
 
-export function testEnv(overrides: Record<string, unknown> = {}): Env {
-  return {
-    APP_VERSION: "3.0.0",
+const testFetcher: Fetcher = {
+  fetch: () => Promise.resolve(new Response("asset")),
+  connect: () => { throw new Error("connect is not implemented in tests"); },
+};
+
+const testLoopback = Object.assign((options: { props?: unknown }) => {
+  void options;
+  return testFetcher;
+}, testFetcher);
+
+export function testEnv(overrides: Partial<RuntimeEnv> = {}): RuntimeEnv {
+  const env: RuntimeEnv = {
+    APP_VERSION: "3.1.0",
     TUSHARE_TOKEN: "",
     TIINGO_KEY: "",
     MARKET_RATE_LIMIT: { limit: () => Promise.resolve({ success: true }) },
     VERSION_METADATA: { id: "test-version", tag: "test", timestamp: "2026-08-10T00:00:00.000Z" },
-    ASSETS: { fetch: () => Promise.resolve(new Response("asset")) },
-    ...overrides,
-  } as unknown as Env;
+    ASSETS: testFetcher,
+  };
+  return { ...env, ...overrides };
 }
 
-export const testExecutionContext = {
+class TestSpan {
+  get isTraced() { return false; }
+  setAttribute() { /* no-op */ }
+  end() { /* no-op */ }
+}
+
+export const testExecutionContext: ExecutionContext = {
   waitUntil: () => undefined,
   passThroughOnException: () => undefined,
+  exports: {
+    default: testLoopback,
+  },
   props: {},
-} as unknown as ExecutionContext;
+  tracing: {
+    enterSpan: (_name, callback, ...args) => callback(new TestSpan(), ...args),
+    startActiveSpan: (_name, callback, ...args) => callback(new TestSpan(), ...args),
+    Span: TestSpan,
+  },
+};

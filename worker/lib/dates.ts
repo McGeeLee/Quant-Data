@@ -20,7 +20,13 @@ export function validateDateRange(start: string, end: string): void {
   }
   const startMs = Date.parse(`${start}T00:00:00Z`);
   const endMs = Date.parse(`${end}T00:00:00Z`);
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs > endMs) {
+  if (
+    !Number.isFinite(startMs)
+    || !Number.isFinite(endMs)
+    || isoDate(new Date(startMs)) !== start
+    || isoDate(new Date(endMs)) !== end
+    || startMs > endMs
+  ) {
     throw new AppError("INVALID_DATE_RANGE", 400);
   }
   const fiveYears = DAY_MS * 366 * 5;

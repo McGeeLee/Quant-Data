@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { tiingoProvider } from "../worker/providers/tiingo";
 import { tushareProvider } from "../worker/providers/tushare";
 import { yahooProvider } from "../worker/providers/yahoo";
-import { fetchUpstream } from "../worker/lib/upstream-fetch";
+import { fetchUpstream, readJson } from "../worker/lib/upstream-fetch";
 import type { MarketQuery } from "../worker/domain/types";
 import { yahooPayload } from "./fixtures";
 
@@ -47,6 +47,15 @@ describe("market data providers", () => {
     await expect(tushareProvider.fetch({ ...query, source: "tushare" }, {})).rejects.toMatchObject({ code: "SOURCE_NOT_CONFIGURED", status: 503 });
   });
 
+  it("rejects a Tushare payload missing required fields", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({
+      code: 0,
+      data: { fields: ["trade_date", "open"], items: [["20260810", 10]] },
+    }));
+    await expect(tushareProvider.fetch({ ...query, source: "tushare", symbol: "600519.SH" }, { tushareToken: "test", fetcher }))
+      .rejects.toMatchObject({ code: "UPSTREAM_ERROR", details: { reason: "invalid_payload" } });
+  });
+
   it("normalizes Tiingo raw price fields", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json([
       { date: "2026-08-10T00:00:00.000Z", open: 101, high: 105, low: 100, close: 104, volume: 1200 },
@@ -72,5 +81,21 @@ describe("upstream fetch behavior", () => {
     }));
     await expect(fetchUpstream("https://example.test", {}, fetcher, 5)).rejects.toMatchObject({ code: "UPSTREAM_TIMEOUT", status: 504 });
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns a long upstream retry delay without holding the Worker open", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response("limited", { status: 429, headers: { "retry-after": "30" } }));
+    await expect(fetchUpstream("https://example.test", {}, fetcher, 100)).rejects.toMatchObject({
+      code: "UPSTREAM_RATE_LIMITED",
+      details: { retryAfterSeconds: 30 },
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("bounds upstream JSON bodies", async () => {
+    await expect(readJson(Response.json({ value: "too large" }), 5)).rejects.toMatchObject({
+      code: "UPSTREAM_ERROR",
+      details: { reason: "payload_too_large" },
+    });
   });
 });

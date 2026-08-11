@@ -18,7 +18,8 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
-      "@typescript-eslint/require-await": "off"
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/require-await": "off",
     },
   },
 );

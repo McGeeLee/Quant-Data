@@ -1,6 +1,6 @@
 # Quant Data
 
-[English](./README.md) · [线上仪表盘](https://quant-data.mcgeelee.workers.dev) · [中文文档](https://quant-data.mcgeelee.workers.dev/docs/zh-CN) · [OpenAPI](https://quant-data.mcgeelee.workers.dev/openapi.json)
+[English](./README.md) · [线上仪表盘](https://quant-data.mcgeelee.workers.dev) · [API 指南](./docs/API.zh-CN.md) · [MCP 指南](./docs/MCP.zh-CN.md) · [OpenAPI](https://quant-data.mcgeelee.workers.dev/openapi.json)
 
 Quant Data 是运行在单个 Cloudflare Worker 上的双语行情仪表盘、REST API、OpenAPI 3.1 服务与无状态 MCP Server。它将 Yahoo Finance Chart、Tushare Pro 和 Tiingo 统一为按日期升序的未复权日线 OHLCV。
 
@@ -22,6 +22,7 @@ Quant Data 是运行在单个 Cloudflare Worker 上的双语行情仪表盘、RE
 | 端点 | 说明 |
 | --- | --- |
 | `GET /healthz` | 服务版本和 Cloudflare 部署元数据 |
+| `GET /api/v1` | API 发现、链接、操作 ID 和限制 |
 | `GET /api/v1/sources` | 数据源配置、市场、示例、风险和署名 |
 | `GET /api/v1/market-data` | 未复权日线；默认一年、最长五年、最多 2,000 条 |
 | `GET /api/v1/snapshot` | 最新收盘、前收、涨跌额、涨跌幅和成交量 |
@@ -79,7 +80,7 @@ https://quant-data.mcgeelee.workers.dev/mcp
 - `get_market_data`：默认最近 120 条，可把 `limit` 提高到 500，并返回截断状态
 - `get_market_snapshot`：最新收盘和涨跌指标
 
-所有工具均为只读、幂等，具有 Zod 输入/输出 schema，同时返回精简文本与 `structuredContent`。文档资源为 `quant-data://docs/en` 和 `quant-data://docs/zh-CN`。
+所有工具均为只读、幂等，具有 Zod 输入/输出 schema，同时返回精简文本与 `structuredContent`。资源为 `quant-data://docs/en`、`quant-data://docs/zh-CN` 和 `quant-data://api/openapi`。
 
 MCP handler 对生产 Worker、本地开发和 MCP Inspector 来源执行 Host/Origin 校验，防止 DNS rebinding。端点按设计不使用鉴权。
 

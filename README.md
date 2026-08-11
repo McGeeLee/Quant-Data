@@ -1,6 +1,6 @@
 # Quant Data
 
-[中文说明](./README.zh-CN.md) · [Live dashboard](https://quant-data.mcgeelee.workers.dev) · [API docs](https://quant-data.mcgeelee.workers.dev/docs/en) · [OpenAPI](https://quant-data.mcgeelee.workers.dev/openapi.json)
+[中文说明](./README.zh-CN.md) · [Live dashboard](https://quant-data.mcgeelee.workers.dev) · [API guide](./docs/API.md) · [MCP guide](./docs/MCP.md) · [OpenAPI](https://quant-data.mcgeelee.workers.dev/openapi.json)
 
 Quant Data is a bilingual market-data dashboard, REST API, OpenAPI 3.1 service, and stateless MCP server running in a single Cloudflare Worker. It normalizes Yahoo Finance Chart, Tushare Pro, and Tiingo into ascending, daily, unadjusted OHLCV bars.
 
@@ -22,6 +22,7 @@ Quant Data is a bilingual market-data dashboard, REST API, OpenAPI 3.1 service, 
 | Endpoint | Description |
 | --- | --- |
 | `GET /healthz` | Service version and Cloudflare deployment metadata |
+| `GET /api/v1` | API discovery, links, operation IDs, and constraints |
 | `GET /api/v1/sources` | Provider configuration, markets, examples, warnings, attribution |
 | `GET /api/v1/market-data` | Daily raw OHLCV; one year by default, five years maximum, 2,000 bars maximum |
 | `GET /api/v1/snapshot` | Latest close, previous close, change, change percentage, volume |
@@ -79,7 +80,7 @@ Tools:
 - `get_market_data` — defaults to the 120 most recent bars; accepts `limit` up to 500 and reports truncation
 - `get_market_snapshot` — latest close and change metrics
 
-Every tool is read-only and idempotent, has Zod input/output schemas, and returns concise text plus `structuredContent`. Documentation resources are available at `quant-data://docs/en` and `quant-data://docs/zh-CN`.
+Every tool is read-only and idempotent, has Zod input/output schemas, and returns concise text plus `structuredContent`. Resources are available at `quant-data://docs/en`, `quant-data://docs/zh-CN`, and `quant-data://api/openapi`.
 
 The MCP handler validates Host and browser Origin headers against the production Worker, local development, and MCP Inspector origins to prevent DNS rebinding. The endpoint intentionally has no authentication.
 

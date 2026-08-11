@@ -1,5 +1,6 @@
 import { createApiApp } from "./api";
 import { llmsFullText, llmsText } from "./docs-content";
+import type { RuntimeEnv } from "./env";
 import { handleMcp } from "./mcp";
 
 export default {
@@ -16,8 +17,8 @@ export default {
       });
     }
     if (url.pathname === "/healthz" || url.pathname === "/openapi.json" || url.pathname.startsWith("/api/")) {
-      return createApiApp().fetch(request, env, ctx);
+      return createApiApp(ctx).fetch(request, env, ctx);
     }
     return env.ASSETS.fetch(request);
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<RuntimeEnv>;

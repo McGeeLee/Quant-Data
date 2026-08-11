@@ -36,6 +36,10 @@ export const tushareProvider: MarketProvider = {
       throw new AppError("UPSTREAM_ERROR", 502, { reason: "provider_rejected_request" });
     }
     const { fields, items } = parsed.data.data;
+    const requiredFields = ["trade_date", "open", "high", "low", "close", "vol"];
+    if (requiredFields.some((field) => !fields.includes(field))) {
+      throw new AppError("UPSTREAM_ERROR", 502, { reason: "invalid_payload" });
+    }
     const index = Object.fromEntries(fields.map((field, position) => [field, position]));
     return sortedBars(items.map((item) => createBar({
       date: typeof item[index.trade_date] === "string"

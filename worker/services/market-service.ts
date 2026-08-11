@@ -7,18 +7,26 @@ import type {
   MarketSnapshot,
   SourceStatus,
 } from "../domain/types";
+import { MarketBarSchema } from "../domain/types";
+import { z } from "zod";
+import type { RuntimeEnv } from "../env";
 import { AppError } from "../lib/app-error";
 import { disclaimer, warningText } from "../lib/i18n";
 import { getProvider } from "../providers";
 
 const CACHE_TTL = 3_600;
 
-type ServiceEnv = Pick<Env, "MARKET_RATE_LIMIT"> & Partial<Pick<Env, "TUSHARE_TOKEN" | "TIINGO_KEY">>;
+type ServiceEnv = Pick<RuntimeEnv, "MARKET_RATE_LIMIT" | "TUSHARE_TOKEN" | "TIINGO_KEY">;
 
 type CachedPayload = {
   bars: MarketBar[];
   fetchedAt: string;
 };
+
+const CachedPayloadSchema = z.object({
+  bars: z.array(MarketBarSchema),
+  fetchedAt: z.string().datetime(),
+});
 
 type ServiceOptions = {
   maxBars?: number;
@@ -72,7 +80,8 @@ async function readCached(cache: Cache | null, key: Request): Promise<CachedPayl
   const hit = await cache.match(key);
   if (!hit) return null;
   try {
-    return await hit.json<CachedPayload>();
+    const parsed = CachedPayloadSchema.safeParse(await hit.json());
+    return parsed.success ? parsed.data : null;
   } catch {
     return null;
   }
@@ -145,7 +154,9 @@ export async function getMarketData(
           "cache-control": `public, max-age=${CACHE_TTL}`,
         },
       });
-      const write = cache.put(key, response);
+      const write = cache.put(key, response).catch((error: unknown) => {
+        console.error(JSON.stringify({ event: "cache_write_error", name: error instanceof Error ? error.name : "UnknownError" }));
+      });
       if (options.executionCtx) options.executionCtx.waitUntil(write);
       else await write;
     }
@@ -181,7 +192,7 @@ export async function getMarketSnapshot(
   if (!latest) throw new AppError("NOT_FOUND", 404);
   const previous = data.bars.at(-2);
   const change = previous ? latest.close - previous.close : null;
-  const changePercent = previous && previous.close !== 0 ? (change! / previous.close) * 100 : null;
+  const changePercent = previous && change !== null && previous.close !== 0 ? (change / previous.close) * 100 : null;
   return {
     meta: data.meta,
     snapshot: {

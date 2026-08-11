@@ -4,9 +4,12 @@ import type { Locale } from "../domain/types";
 const messages: Record<Locale, Record<ErrorCode, string>> = {
   en: {
     INVALID_REQUEST: "The request parameters are invalid.",
+    INVALID_SYMBOL: "The symbol format is invalid for the selected data source.",
     INVALID_DATE_RANGE: "The date range is invalid or exceeds five years.",
     SOURCE_NOT_CONFIGURED: "This data source is not configured on the server.",
     NOT_FOUND: "No market data was found for the requested symbol and date range.",
+    ROUTE_NOT_FOUND: "The requested API route does not exist.",
+    METHOD_NOT_ALLOWED: "This route does not support the requested HTTP method.",
     RATE_LIMITED: "The public rate limit has been exceeded. Try again shortly.",
     UPSTREAM_RATE_LIMITED: "The upstream data provider is rate limiting requests.",
     UPSTREAM_TIMEOUT: "The upstream data provider timed out.",
@@ -15,9 +18,12 @@ const messages: Record<Locale, Record<ErrorCode, string>> = {
   },
   "zh-CN": {
     INVALID_REQUEST: "请求参数无效。",
+    INVALID_SYMBOL: "代码格式不符合所选数据源的要求。",
     INVALID_DATE_RANGE: "日期范围无效或超过五年。",
     SOURCE_NOT_CONFIGURED: "服务器尚未配置此数据源。",
     NOT_FOUND: "未找到该代码与日期范围对应的行情数据。",
+    ROUTE_NOT_FOUND: "请求的 API 路由不存在。",
+    METHOD_NOT_ALLOWED: "该路由不支持所请求的 HTTP 方法。",
     RATE_LIMITED: "已超过公开接口限流，请稍后重试。",
     UPSTREAM_RATE_LIMITED: "上游数据提供方正在限流。",
     UPSTREAM_TIMEOUT: "上游数据提供方响应超时。",

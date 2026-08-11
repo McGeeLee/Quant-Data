@@ -1,11 +1,12 @@
 import { Client, StreamableHTTPClientTransport, type FetchLike } from "@modelcontextprotocol/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { handleMcp } from "../worker/mcp";
+import type { RuntimeEnv } from "../worker/env";
 import { testEnv, testExecutionContext, yahooPayload } from "./fixtures";
 
 afterEach(() => vi.unstubAllGlobals());
 
-function transportFetch(env: Env): FetchLike {
+function transportFetch(env: RuntimeEnv): FetchLike {
   return async (input, init) => {
     const incoming = input instanceof Request ? input : new Request(String(input), init);
     const headers = new Headers(incoming.headers);
@@ -34,7 +35,11 @@ describe("stateless MCP server", () => {
       expect(tools.tools.map((tool) => tool.name)).toEqual(["list_data_sources", "get_market_data", "get_market_snapshot"]);
       expect(tools.tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
       const resources = await client.listResources();
-      expect(resources.resources.map((resource) => resource.uri)).toEqual(["quant-data://docs/en", "quant-data://docs/zh-CN"]);
+      expect(resources.resources.map((resource) => resource.uri)).toEqual(["quant-data://docs/en", "quant-data://docs/zh-CN", "quant-data://api/openapi"]);
+      const openapi = await client.readResource({ uri: "quant-data://api/openapi" });
+      const firstContent = openapi.contents[0];
+      const text = firstContent && "text" in firstContent ? firstContent.text : undefined;
+      expect(typeof text === "string" ? JSON.parse(text) : {}).toMatchObject({ openapi: "3.1.0" });
     } finally {
       await client.close();
     }
@@ -46,6 +51,8 @@ describe("stateless MCP server", () => {
       const result = await client.callTool({ name: "list_data_sources", arguments: { lang: "zh-CN" } });
       expect(result.isError).not.toBe(true);
       expect((result.structuredContent as { sources: Array<{ id: string }> }).sources[0]?.id).toBe("yahoo");
+      const first = result.content[0];
+      expect(first?.type === "text" ? JSON.parse(first.text) : {}).toHaveProperty("sources");
     } finally {
       await client.close();
     }
@@ -74,6 +81,21 @@ describe("stateless MCP server", () => {
       const first = result.content[0];
       expect(first?.type).toBe("text");
       expect(first?.type === "text" ? first.text : "").toContain("Input validation error");
+    } finally {
+      await client.close();
+    }
+  });
+
+  it("returns model-actionable application errors", async () => {
+    const client = await connect("auto");
+    try {
+      const result = await client.callTool({ name: "get_market_data", arguments: { source: "tushare", symbol: "AAPL", lang: "en" } });
+      expect(result.isError).toBe(true);
+      const first = result.content[0];
+      const body = first?.type === "text" ? JSON.parse(first.text) as { error: Record<string, unknown> } : { error: {} };
+      expect(body.error).toMatchObject({ code: "INVALID_SYMBOL", retryable: false });
+      expect(body.error).toHaveProperty("hint");
+      expect(body.error).toHaveProperty("requestId");
     } finally {
       await client.close();
     }
