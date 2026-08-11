@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import type { DataSource, MarketDataResponse, SourceStatus } from "../worker/domain/types";
 import { DocsPage } from "./components/DocsPage";
 import { MarketCharts } from "./components/MarketCharts";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { fetchMarketData, fetchSources } from "./lib/api";
 import { detectLocale, translations, type UiLocale } from "./lib/i18n";
 import { calculateSnapshot, formatNumber } from "./lib/market";
@@ -85,7 +86,10 @@ export default function App() {
           <a href="/openapi.json">{t.apiContract}</a>
           <a href={`/docs/${locale}#mcp`}>{t.mcp}</a>
         </div>
-        <button className="lang-switch" onClick={() => setLocale(locale === "en" ? "zh-CN" : "en")} aria-label="Switch language">{locale === "en" ? "中文" : "EN"}</button>
+        <div className="nav-actions">
+          <ThemeToggle locale={locale} />
+          <button className="lang-switch" onClick={() => setLocale(locale === "en" ? "zh-CN" : "en")} aria-label="Switch language">{locale === "en" ? "中文" : "EN"}</button>
+        </div>
       </nav>
 
       <header className="hero">

@@ -22,18 +22,61 @@ test("localized documentation route", async ({ page }) => {
   await expect(page.getByText("get_market_data", { exact: true })).toBeVisible();
 });
 
-test("ultra-wide layout keeps major content on one visual baseline", async ({ page }) => {
-  await page.setViewportSize({ width: 2560, height: 1440 });
+test("theme follows the system and persists the manual override", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
   await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
-  const heroHeading = await page.locator(".hero h1").boundingBox();
-  const workspace = await page.locator(".workspace").boundingBox();
-  const developerSection = await page.locator(".developer-section").boundingBox();
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(await page.evaluate(() => localStorage.getItem("mcgeelee-theme"))).toBe("light");
 
-  expect(heroHeading).not.toBeNull();
-  expect(workspace).not.toBeNull();
-  expect(developerSection).not.toBeNull();
-  expect(Math.abs(heroHeading!.x - workspace!.x)).toBeLessThan(40);
-  expect(Math.abs(developerSection!.x - workspace!.x)).toBeLessThan(2);
-  expect(Math.abs(developerSection!.width - workspace!.width)).toBeLessThan(2);
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+});
+
+test("desktop layouts share one 1180px content rail", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+
+  for (const viewport of [
+    { width: 1366, height: 768 },
+    { width: 1440, height: 900 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+
+    const geometry = await page.evaluate(() => {
+      const contentRail = (selector: string) => {
+        const element = document.querySelector<HTMLElement>(selector);
+        if (!element) throw new Error(`Missing ${selector}`);
+        const box = element.getBoundingClientRect();
+        const styles = getComputedStyle(element);
+        const left = box.left + Number.parseFloat(styles.paddingLeft);
+        const right = box.right - Number.parseFloat(styles.paddingRight);
+        return { selector, left, right, width: right - left };
+      };
+      const developer = document.querySelector<HTMLElement>(".developer-section")?.getBoundingClientRect();
+      if (!developer) throw new Error("Missing .developer-section");
+
+      return {
+        contentMax: getComputedStyle(document.documentElement).getPropertyValue("--content-max").trim(),
+        viewportWidth: document.documentElement.clientWidth,
+        pageWidth: document.documentElement.scrollWidth,
+        rails: [".topbar", ".hero", ".workspace", "footer"].map(contentRail),
+        developer: { left: developer.left, right: developer.right, width: developer.width },
+      };
+    });
+
+    expect(geometry.contentMax).toBe("1180px");
+    expect(geometry.pageWidth).toBeLessThanOrEqual(geometry.viewportWidth);
+    for (const rail of geometry.rails) {
+      expect(rail.left, rail.selector).toBeCloseTo(geometry.rails[0].left, 0);
+      expect(rail.right, rail.selector).toBeCloseTo(geometry.rails[0].right, 0);
+      expect(rail.width, rail.selector).toBeCloseTo(1180, 0);
+    }
+    expect(geometry.developer.left).toBeCloseTo(geometry.rails[0].left, 0);
+    expect(geometry.developer.right).toBeCloseTo(geometry.rails[0].right, 0);
+    expect(geometry.developer.width).toBeCloseTo(1180, 0);
+  }
 });

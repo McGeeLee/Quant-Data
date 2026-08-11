@@ -1,5 +1,6 @@
 import type { UiLocale } from "../lib/i18n";
 import { translations } from "../lib/i18n";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function DocsPage({ locale, onLocale }: { locale: UiLocale; onLocale: (locale: UiLocale) => void }) {
   const t = translations[locale];
@@ -10,6 +11,7 @@ export function DocsPage({ locale, onLocale }: { locale: UiLocale; onLocale: (lo
         <a className="brand" href="/"><span className="brand-mark">Q</span><span>Quant Data</span></a>
         <div className="nav-actions">
           <a href="/">{t.back}</a>
+          <ThemeToggle locale={locale} />
           <button className="lang-switch" onClick={() => onLocale(zh ? "en" : "zh-CN")} aria-label="Switch language">{zh ? "EN" : "中文"}</button>
         </div>
       </nav>
